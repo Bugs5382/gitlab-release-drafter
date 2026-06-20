@@ -1,0 +1,30 @@
+# 03 — Auto-tag: let the tool create the version tag itself.
+#
+# By default `release` waits for a tag to exist. With --auto-tag (or the
+# GLRD_AUTO_TAG variable), `release` creates the resolved tag for you, then
+# cuts the Release against it. Useful when you drive releases purely from a
+# scheduled scan or a manual button and don't push tags by hand.
+#
+# NOTE: creating tags requires the token to be allowed to push to the target
+# ref. If your default branch is protected, give GLRD_TOKEN the needed access
+# and run this only from a protected ref.
+
+stages: [release]
+
+variables:
+  GLRD_IMAGE: ghcr.io/bugs5382/gitlab-release-drafter:latest
+
+release:
+  stage: release
+  image: $GLRD_IMAGE
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  script:
+    # Equivalent: set GLRD_AUTO_TAG=true as a CI/CD variable and drop the flag.
+    - gitlab-release-drafter release --auto-tag
+  artifacts:
+    paths:
+      - CHANGELOG.md
+      - release-notes.md

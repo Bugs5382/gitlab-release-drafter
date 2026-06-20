@@ -1,0 +1,65 @@
+# Conventional-commits config — let the `label` command derive labels from
+# branch names and MR titles that follow the Conventional Commits style, so
+# contributors don't have to remember to label MRs by hand.
+#
+# Wire the `label` job on merge_request_event pipelines (see
+# ../ci/02-autolabel.gitlab-ci.yml). Once labels are applied, the same
+# categories/increments below turn them into notes and a version bump.
+
+version:
+  initial: "0.1.0"
+  default-increment: patch
+  increments:
+    major: ["breaking"]
+    minor: ["feature"]
+    patch: ["fix", "chore"]
+
+categories:
+  # First so breaking changes lead the notes. The autolabeler below applies the
+  # "breaking" label (from `!:` titles / "BREAKING CHANGE"), and increments.major
+  # uses the same label — this category surfaces it.
+  - title: "⚠️ Breaking Changes"
+    labels: ["breaking"]
+  - title: "🚀 Features"
+    labels: ["feature"]
+  - title: "🐛 Fixes"
+    labels: ["fix"]
+  - title: "📚 Documentation"
+    labels: ["documentation"]
+  - title: "🧰 Chores"
+    labels: ["chore"]
+
+labels-mode: any
+exclude-labels: ["skip-changelog"]
+
+# Derive labels from conventional-commit branch prefixes, title prefixes, and
+# changed files. `branch` and `title` are regexes; `files` are globs (** = any
+# depth).
+autolabeler:
+  - label: "feature"
+    branch: ["^feat/", "^feature/"]
+    title: ['^feat(\(.+\))?:']
+  - label: "fix"
+    branch: ["^fix/", "^bugfix/", "^hotfix/"]
+    title: ['^fix(\(.+\))?:']
+  - label: "chore"
+    branch: ["^chore/"]
+    title: ['^chore(\(.+\))?:']
+  - label: "breaking"
+    title: ['^[a-z]+(\(.+\))?!:', "BREAKING CHANGE"]
+  - label: "documentation"
+    branch: ["^docs/"]
+    title: ['^docs(\(.+\))?:']
+    files: ["docs/**", "**/*.md"]
+
+change-template: "- {title} (!{iid}) by @{author}"
+
+changelog:
+  file: "CHANGELOG.md"
+  keep-a-changelog: true
+  section-map:
+    "⚠️ Breaking Changes": "Changed"
+    "🚀 Features": "Added"
+    "🐛 Fixes": "Fixed"
+    "📚 Documentation": "Changed"
+    "🧰 Chores": "Changed"

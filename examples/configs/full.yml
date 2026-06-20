@@ -1,0 +1,76 @@
+# Full config — every supported option, documented inline.
+# Trim this down to what you actually need; most fields have defaults.
+
+version:
+  # Tag/Release-title templates. Placeholders: {version} {major} {minor} {patch}
+  tag-template: "v{version}"          # default: v{version}
+  name-template: "v{version}"         # default: v{version}
+  initial: "0.1.0"                    # used when no prior release/tag exists
+  default-increment: patch            # major|minor|patch — for MRs matching no increment label
+  increments:                         # label -> semver bump (highest across the milestone wins)
+    major: ["type::breaking", "breaking-change"]
+    minor: ["type::feature", "enhancement"]
+    patch: ["type::fix", "bug", "type::chore"]
+
+# Categories are rendered in list order. An MR lands in the FIRST category it
+# matches. MRs matching no category are dropped unless uncategorized-title is set.
+categories:
+  # Listed first so breaking changes render at the top. Mirror the labels in
+  # version.increments.major so the major-bump triggers also get their own section.
+  - title: "⚠️ Breaking Changes"
+    labels: ["type::breaking", "breaking-change"]
+  - title: "🚀 Features"
+    labels: ["type::feature", "enhancement"]
+  - title: "🐛 Bug Fixes"
+    labels: ["type::fix", "bug"]
+  - title: "🧰 Maintenance"
+    labels: ["type::chore", "dependencies"]
+uncategorized-title: "📦 Other Changes"   # empty string = drop unmatched MRs
+
+labels-mode: any                      # any = MR shares >=1 label; all = MR has every category label
+exclude-labels: ["skip-changelog", "type::ci"]   # MRs with any of these are excluded entirely
+
+# Release body. Placeholders: {changes} {contributors} {version} {previous_tag} {date} {milestone}
+template: |
+  {changes}
+
+  ## 👥 Contributors
+
+  {contributors}
+
+# Per-MR line. Placeholders: {title} {iid} {author} {url} {labels} {milestone}
+change-template: "- {title} (!{iid}) by @{author}"
+no-changes-template: "No notable changes."
+category-template: "### {title}"     # heading rendered per category in the body
+
+sort: merged_at                       # merged_at | title
+sort-direction: desc                  # asc | desc
+
+contributors:
+  exclude: ["renovate-bot", "dependabot"]   # bot accounts to omit
+  template: "@{username}"             # placeholders: {username} {name}
+  separator: ", "
+
+# Applied by the `label` command. A rule fires if ANY of its branch regexes,
+# title regexes, or file globs match. branch/title are regexes; files are globs.
+autolabeler:
+  - label: "type::fix"
+    branch: ["^fix/", "^bugfix/"]
+    title: ['^fix(\(.+\))?:']
+  - label: "type::feature"
+    branch: ["^feat/", "^feature/"]
+    title: ['^feat(\(.+\))?:']
+  - label: "documentation"
+    files: ["docs/**", "**/*.md"]
+
+changelog:
+  file: "CHANGELOG.md"
+  keep-a-changelog: true              # maintain Keep a Changelog 1.1.0 structure
+  # Map category titles to canonical KAC sections (Added/Changed/Deprecated/
+  # Removed/Fixed/Security). Unmapped categories appear under their own title.
+  section-map:
+    "⚠️ Breaking Changes": "Changed"
+    "🚀 Features": "Added"
+    "🐛 Bug Fixes": "Fixed"
+    "🧰 Maintenance": "Changed"
+    "📦 Other Changes": "Changed"

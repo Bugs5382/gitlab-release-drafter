@@ -1,0 +1,43 @@
+# 04 — Version in build: consume the previewed version in a downstream job.
+#
+# `preview` emits a dotenv report (release.env) containing RELEASE_VERSION,
+# RELEASE_TAG, RELEASE_MILESTONE and RELEASE_INCREMENT. A later job that
+# `needs:` the preview job inherits those as environment variables — so you can
+# tag a container image with the exact version the milestone WOULD cut, before
+# the release is actually made.
+
+stages: [preview, build]
+
+variables:
+  GLRD_IMAGE: ghcr.io/bugs5382/gitlab-release-drafter:latest
+
+preview:
+  stage: preview
+  image: $GLRD_IMAGE
+  script:
+    - gitlab-release-drafter preview
+  artifacts:
+    reports:
+      dotenv: release.env
+
+build-image:
+  stage: build
+  needs:
+    - job: preview
+      artifacts: true        # pulls in RELEASE_VERSION et al. from the dotenv report
+  image: docker:27
+  services: ["docker:27-dind"]
+  rules:
+    # Only build a tagged image when there's actually a version to cut.
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  script:
+    - |
+      if [ -z "$RELEASE_VERSION" ]; then
+        echo "No milestone/version resolved — building :latest only"
+        TAG="latest"
+      else
+        echo "Building image for resolved version $RELEASE_VERSION"
+        TAG="$RELEASE_VERSION"
+      fi
+    - docker build -t "$CI_REGISTRY_IMAGE:$TAG" .
+    - docker push "$CI_REGISTRY_IMAGE:$TAG"

@@ -1,0 +1,19 @@
+# 02 — Autolabel: apply labels to MRs automatically on MR pipelines.
+#
+# The `label` command needs to know which MR it's running for; GitLab provides
+# CI_MERGE_REQUEST_IID on merge_request_event pipelines, which the tool reads.
+#
+# Pair this with an autolabeler config (see ../configs/conventional-commits.yml).
+
+stages: [label]
+
+variables:
+  GLRD_IMAGE: ghcr.io/bugs5382/gitlab-release-drafter:latest
+
+autolabel:
+  stage: label
+  image: $GLRD_IMAGE
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - gitlab-release-drafter label

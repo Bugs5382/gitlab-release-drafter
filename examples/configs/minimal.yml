@@ -1,0 +1,11 @@
+# Minimal config — the smallest thing that validates.
+#
+# Everything else (version templates, sort order, change-template, etc.) falls
+# back to sensible defaults. A single category catches the labels you care about.
+#
+# Store this as the GLRD_CONFIG CI/CD variable (raw YAML, or base64 — see
+# ../scripts/encode-config.sh).
+
+categories:
+  - title: "Changes"
+    labels: ["feature", "fix", "chore"]
