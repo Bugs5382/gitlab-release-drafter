@@ -1,0 +1,40 @@
+# 01 — Basic: preview on every pipeline, release when a milestone is done.
+#
+# Prerequisites (CI/CD variables):
+#   GLRD_CONFIG  — your YAML config (raw or base64). NOT masked.
+#   GLRD_TOKEN   — token with `api` scope. Masked (and protected if you release
+#                  only from protected refs).
+
+stages: [preview, release]
+
+variables:
+  GLRD_IMAGE: ghcr.io/bugs5382/gitlab-release-drafter:latest
+
+# Resolve the next version + render notes on every pipeline. Pure read.
+preview:
+  stage: preview
+  image: $GLRD_IMAGE
+  script:
+    - gitlab-release-drafter preview
+  artifacts:
+    reports:
+      dotenv: release.env          # exposes $RELEASE_VERSION etc. to later jobs
+    paths:
+      - release-notes.md
+
+# Cut releases for closed-but-unreleased milestones (scheduled scan),
+# in response to a pushed tag, or manually from the default branch.
+release:
+  stage: release
+  image: $GLRD_IMAGE
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+  script:
+    - gitlab-release-drafter release
+  artifacts:
+    paths:
+      - CHANGELOG.md
+      - release-notes.md

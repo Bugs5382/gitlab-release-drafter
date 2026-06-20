@@ -1,0 +1,58 @@
+# Scoped-labels config — GitLab "scoped labels" (key::value) drive both the
+# version bump and the notes sections, with emoji category titles.
+#
+# Scoped labels are mutually exclusive within a scope (e.g. an MR can only have
+# one `type::*`), which makes them a clean way to classify MRs.
+
+version:
+  tag-template: "v{version}"
+  name-template: "v{version}"
+  initial: "0.1.0"
+  default-increment: patch
+  increments:
+    major: ["type::breaking"]
+    minor: ["type::feature"]
+    patch: ["type::fix", "type::chore"]
+
+categories:
+  # Listed first so breaking changes render at the top of the notes. The labels
+  # here mirror version.increments.major above, so anything that bumps the major
+  # version also gets surfaced in its own section.
+  - title: "⚠️ Breaking Changes"
+    labels: ["type::breaking"]
+  - title: "🚀 Features"
+    labels: ["type::feature"]
+  - title: "🐛 Bug Fixes"
+    labels: ["type::fix"]
+  - title: "🧰 Maintenance"
+    labels: ["type::chore", "dependencies"]
+
+uncategorized-title: "📦 Other Changes"   # keep unmatched MRs instead of dropping them
+
+labels-mode: any
+exclude-labels: ["skip-changelog", "type::ci"]
+
+template: |
+  {changes}
+
+  ## 👥 Contributors
+
+  {contributors}
+
+change-template: "- {title} (!{iid}) by @{author}"
+category-template: "### {title}"
+
+contributors:
+  exclude: ["renovate-bot"]
+  template: "@{username}"
+  separator: ", "
+
+changelog:
+  file: "CHANGELOG.md"
+  keep-a-changelog: true
+  section-map:
+    "⚠️ Breaking Changes": "Changed"
+    "🚀 Features": "Added"
+    "🐛 Bug Fixes": "Fixed"
+    "🧰 Maintenance": "Changed"
+    "📦 Other Changes": "Changed"
