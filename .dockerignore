@@ -1,0 +1,15 @@
+# Keep the build context small and reproducible. The Go build only needs the
+# module sources; everything below is irrelevant to the image.
+.git
+.github
+.claude
+plan
+examples
+*.md
+**/*_test.go
+**/testdata
+Taskfile.yaml
+.golangci.yml
+.gitleaks.toml
+.gitlab-ci.example.yml
+LICENSE
